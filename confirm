@@ -1,0 +1,76 @@
+// Function to extract data based on the XPath and create CSV content
+function extractDataAndSaveAsCSV() {
+    // Define the XPaths
+    const xpath1 = "/html/body/app-root/app-admin-dashboard/div/div/main/div[2]/div/div[2]/app-admin-track-student/div[1]/div[2]/div/div[1]/ul/li[4]/div/span[2]"; // For data column
+    const xpath2 = "/html/body/app-root/app-admin-dashboard/div/div/main/div[2]/div/div[2]/app-admin-track-student/div[1]/div[2]/div/div[1]/ul/li[3]/span[2]"; // For Dob column
+    const xpath3 = "/html/body/app-root/app-admin-dashboard/div/div/main/div[2]/div/div[2]/app-admin-track-student/div[1]/div[2]/div/div[1]/ul/li[1]/span[2]"; // For student column
+
+    // Use document.evaluate to get the elements using the XPaths
+    const result1 = document.evaluate(xpath1, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    const element1 = result1.singleNodeValue;
+
+    const result2 = document.evaluate(xpath2, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    const element2 = result2.singleNodeValue;
+
+    const result3 = document.evaluate(xpath3, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    const element3 = result3.singleNodeValue;
+
+    if (element1 && element2 && element3) {
+        // Get the text content of the elements
+        const data1 = element1.textContent.trim();
+        const data2 = element2.textContent.trim();
+        const data3 = element3.textContent.trim();
+
+        // Create a unique ID
+        const uniqueId = Date.now();
+
+        // Add the data to the studentsData array
+        studentsData.push([uniqueId, data1, data2, data3]);
+
+        // Show a popup message indicating successful data extraction
+        alert(`Data for student ${studentsData.length} has been extracted successfully.`);
+
+        console.log(`Data for student ${studentsData.length} added.`);
+
+        // Ask the user if they want to continue or finish
+        const userResponse = confirm("Do you want to continue extracting data for another student? Click 'Cancel' to finish and download the CSV file.");
+
+        if (!userResponse) {
+            // User chose to finish, create and download the CSV file
+
+            // Create CSV content with headers
+            let csvContent = "id,data,Dob,student\n";
+            studentsData.forEach(row => {
+                csvContent += row.join(",") + "\n";
+            });
+
+            // Create a Blob object to hold the CSV data
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+
+            // Create a download link for the CSV file
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'data.csv';
+            document.body.appendChild(a);
+            a.click();
+
+            // Cleanup: Remove the link after download
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            console.log('CSV file created and downloaded successfully.');
+
+            // Stop the interval
+            clearInterval(intervalId);
+        }
+    } else {
+        console.error('One or more elements not found using the provided XPaths.');
+    }
+}
+
+// Array to store data for each student
+let studentsData = [];
+
+// Run the extractDataAndSaveAsCSV function every 30 seconds
+const intervalId = setInterval(extractDataAndSaveAsCSV, 30000);
